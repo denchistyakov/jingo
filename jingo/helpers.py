@@ -80,3 +80,84 @@ def field_attrs(field_inst, **kwargs):
 def url(viewname, *args, **kwargs):
     """Return URL using django's ``reverse()`` function."""
     return reverse(viewname, args=args, kwargs=kwargs)
+    
+    
+@register.filter
+def format_date(value, fmt="%d.%m.%Y %H:%M:%S"):
+    '''
+    Fileter for date formating
+
+    @param value: date
+    @param fmt: format
+    @return: string
+    '''
+
+    from django.utils import translation, formats
+    from django.utils.dateformat import format
+    translation.activate(translation.get_language())
+
+    if settings.USE_L10N and hasattr(settings, fmt):
+        return formats.date_format(value, fmt)
+    return format(value, fmt)
+    
+
+@register.test
+def is_dict(value):
+    return isinstance(value, dict)
+
+
+@register.filter
+def random_from_splited_string(value):
+    import random
+
+    list = value.split(',')
+    value = list[random.randint(0, len(list) - 1)]
+    return value.strip()
+
+
+@register.filter
+def hidereferer(value):
+    from django.utils.http import urlquote
+    return u'%s://%s/?%s' % (
+        settings.HIDEREFERER_PROTOCOL,
+        settings.HIDEREFERER_HOST,
+        urlquote(value)
+    )
+
+
+@register.filter
+def normalize_phone(value):
+    value = unicode(value)
+    value = value.strip()
+    l = len(value)
+
+    if l < 5:
+        return value
+
+    value = re.sub('[^+0-9]', '', value)
+
+    l = len(value)
+    if l == 7:
+        value = '+7495' + value
+    elif l == 10:
+        value = '+7' + value
+    elif l == 11 and value[0] == '7':
+        value = '+' + value
+
+    value = re.sub('^8', '+7', value)
+    value = re.sub('^\+(7|380|375|1)([0-9]{2,3})([0-9]{3})([0-9]{2})([0-9]{2})',
+                   '+\\1 (\\2) \\3-\\4-\\5',
+                   value)
+    return value
+
+
+@register.filter
+def normalize_car_num(value):
+    return value
+
+
+@register.filter
+def quoted_printable(value):
+    from email import Charset
+    Charset.add_charset('utf-8', Charset.QP, Charset.QP, 'utf-8')
+    return value.encode('utf-8').encode('quoted-printable')
