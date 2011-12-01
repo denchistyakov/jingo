@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from django.utils.translation import ugettext as _
 from django.template.defaulttags import CsrfTokenNode
 from django.utils.encoding import smart_unicode
@@ -5,6 +7,7 @@ from django.core.urlresolvers import reverse
 
 from django.conf import settings
 
+import re
 import jinja2
 
 from jingo import register
