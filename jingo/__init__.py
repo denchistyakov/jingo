@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Adapter for using Jinja2 with Django."""
 import functools
 import imp
@@ -10,6 +11,7 @@ from django.template.base import Origin, TemplateDoesNotExist
 from django.template.context import get_standard_processors
 from django.template.loader import BaseLoader
 from django.utils.importlib import import_module
+from django.utils import translation
 
 import jinja2
 
@@ -57,11 +59,7 @@ def get_env():
         opts.update(config)
 
     e = Environment(**opts)
-    # Install null translations since gettext isn't always loaded up during
-    # testing.
-    if ('jinja2.ext.i18n' in e.extensions or
-        'jinja2.ext.InternationalizationExtension' in e.extensions):
-        e.install_null_translations()
+    e.install_gettext_translations(translation)
     return e
 
 
@@ -128,6 +126,15 @@ class Register(object):
     def filter(self, f):
         """Adds the decorated function to Jinja's filter library."""
         self.env.filters[f.__name__] = f
+        return f
+        
+    def test(self, f):
+        """Adds the decorated function to Jinja's test library."""
+        name = f.__name__
+        if (name.startswith('is_')):
+            name = name[3:]
+        
+        self.env.tests[name] = f
         return f
 
     def function(self, f=None, override=True):
